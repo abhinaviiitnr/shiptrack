@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Identity.Api.Application.DTOs;
+using Identity.Api.Application.Exceptions;
 using Identity.Api.Configuration;
 using Identity.Api.Domain;
 using Identity.Api.Infrastructure;

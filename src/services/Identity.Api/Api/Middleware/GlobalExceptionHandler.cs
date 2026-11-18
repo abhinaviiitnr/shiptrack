@@ -15,7 +15,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
     {
         var (status, title) = exception switch
         {
-            Application.Commands.ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
+            Application.Exceptions.ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
         };
 
