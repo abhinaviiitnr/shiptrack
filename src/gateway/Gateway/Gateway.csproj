@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <!-- YARP Gateway: single entry point that routes to the three backend services -->
+    <AssemblyName>Gateway</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Yarp.ReverseProxy" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,16 @@
+<Project>
+  <!-- Applied to every project in the repo automatically by MSBuild -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <!-- Treat all warnings as errors — keeps the codebase clean -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Ignore NuGet audit security warnings so transitive packages don't fail compilation -->
+    <NoWarn>$(NoWarn);NU1901;NU1902;NU1903;NU1904</NoWarn>
+    <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- Deterministic builds for reproducibility in CI -->
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,53 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.swp
+*.*~
+project.lock.json
+.idea/
+*.nupkg
+**/TestResults/
+**/coverage/
+**/coverage.json
+
+## Secrets
+.env
+*.pfx
+*.p12
+*.key
+
+## Node / Frontend
+node_modules/
+dist/
+.vite/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+## Docker
+.dockerignore
+
+## OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Logs
+*.log
+logs/
+.dotnet_cli/
+
+
+## EF Migrations (keep the files, ignore the snapshots temp)
+# Keep migrations committed
+
+## Coverage
+coverage/
+lcov.info
