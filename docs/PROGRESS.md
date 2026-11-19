@@ -49,4 +49,5 @@
 - Added the admin product creation and order status management screens.
 - Added explicit checkout error rendering and shipping-method selection.
 - Added focused Vitest coverage for persisted cart validation and cleanup; all 3 tests pass.
+- Added GitHub Actions CI for backend tests, frontend checks, dependency auditing, and complete Docker image builds.
 - Frontend type-checking passed locally and the complete production Docker build passed; browser-level tests remain part of the next validation phase.

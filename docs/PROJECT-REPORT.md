@@ -272,3 +272,13 @@ At the current checkpoint:
 - Frontend focused tests: 3 passed.
 - Production dependency audit: 0 vulnerabilities.
 - Full dependency audit after Vitest upgrade: 0 vulnerabilities.
+
+## CI/CD status
+
+The repository now includes [`.github/workflows/ci.yml](../.github/workflows/ci.yml), which runs on pushes and pull requests targeting `master`. It validates:
+
+- .NET restore, Release build, and backend tests
+- Frontend `npm ci`, dependency audit, TypeScript check, tests, and production build
+- Docker builds for the complete Compose stack
+
+Cloud deployment is intentionally separate from CI so credentials and environment-specific infrastructure are not committed to the repository.
