@@ -23,7 +23,7 @@ public sealed class CreateOrderHandler(
             var ids = req.Items.Select(i => i.ProductId);
             products = await inventory.GetProductPricesAsync(ids, ct);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to fetch product prices from Inventory.");
             return CreateOrderResult.InventoryUnavailable("Inventory service is unavailable.");
@@ -46,7 +46,7 @@ public sealed class CreateOrderHandler(
         {
             reserveResult = await inventory.ReserveAsync(reserveItems, ct);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to call reserve on Inventory.");
             return CreateOrderResult.InventoryUnavailable("Could not reserve stock.");

@@ -36,24 +36,27 @@ public sealed class OrderRepository(OrdersDbContext db) : IOrderRepository
         if (filter.CustomerId.HasValue)
             query = query.Where(o => o.CustomerId == filter.CustomerId.Value);
 
-        // Keyset: return rows with Id > cursor, ordered by CreatedAt DESC then Id.
+        // Keyset: return rows after the cursor in CreatedAt/Id descending order.
         if (filter.Cursor.HasValue)
         {
-            var cursor = await db.Orders
+            var cursorOrder = await db.Orders
                 .AsNoTracking()
                 .Where(o => o.Id == filter.Cursor.Value)
-                .Select(o => o.CreatedAt)
                 .FirstOrDefaultAsync(ct);
 
-            query = query.Where(o => o.CreatedAt < cursor
-                || (o.CreatedAt == cursor && o.Id.CompareTo(filter.Cursor.Value) > 0));
+            if (cursorOrder is null)
+                return ([], null);
+
+            query = query.Where(o => o.CreatedAt < cursorOrder.CreatedAt
+                || (o.CreatedAt == cursorOrder.CreatedAt
+                    && o.Id.CompareTo(filter.Cursor.Value) < 0));
         }
 
         // WHY: Projection into DTOs avoids loading navigation properties we don't need.
         // AsNoTracking + projection = fastest possible read-only query.
         var items = await query
             .OrderByDescending(o => o.CreatedAt)
-            .ThenBy(o => o.Id)
+            .ThenByDescending(o => o.Id)
             .Take(filter.PageSize + 1)  // Take one extra to detect if there's a next page.
             .Select(o => new OrderSummaryDto(
                 o.Id,
@@ -82,18 +85,21 @@ public sealed class OrderRepository(OrdersDbContext db) : IOrderRepository
 
         if (cursor.HasValue)
         {
-            var cursorDate = await db.Orders.AsNoTracking()
+            var cursorOrder = await db.Orders.AsNoTracking()
                 .Where(o => o.Id == cursor.Value)
-                .Select(o => o.CreatedAt)
                 .FirstOrDefaultAsync(ct);
 
-            query = query.Where(o => o.CreatedAt < cursorDate
-                || (o.CreatedAt == cursorDate && o.Id.CompareTo(cursor.Value) > 0));
+            if (cursorOrder is null)
+                return ([], null);
+
+            query = query.Where(o => o.CreatedAt < cursorOrder.CreatedAt
+                || (o.CreatedAt == cursorOrder.CreatedAt
+                    && o.Id.CompareTo(cursor.Value) < 0));
         }
 
         var items = await query
             .OrderByDescending(o => o.CreatedAt)
-            .ThenBy(o => o.Id)
+            .ThenByDescending(o => o.Id)
             .Take(pageSize + 1)
             .Select(o => new OrderSummaryDto(
                 o.Id, o.CustomerId, o.Status.ToString(),

@@ -1,0 +1,79 @@
+@baseUrl = http://localhost:8080
+@customerEmail = smoke-{{$timestamp}}@example.com
+@customerPassword = Customer@123456
+@adminEmail = admin@shiptrack.dev
+@adminPassword = Admin@123456
+@sku = SMOKE-{{$timestamp}}
+
+### Register a new customer
+# @name registerCustomer
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{customerEmail}}",
+  "password": "{{customerPassword}}"
+}
+
+### Log in as the customer
+# @name loginCustomer
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{customerEmail}}",
+  "password": "{{customerPassword}}"
+}
+
+### Log in as the seeded admin
+# @name loginAdmin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+### Create a product as admin
+# @name createProduct
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "sku": "{{sku}}",
+  "name": "Smoke Test Product",
+  "description": "Created by the backend smoke test",
+  "price": 25.00,
+  "stockQuantity": 10
+}
+
+### Browse products as the customer
+GET {{baseUrl}}/api/products?page=1&pageSize=20
+Authorization: Bearer {{loginCustomer.response.body.$.token}}
+
+### Create an order as the customer
+# @name createOrder
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{loginCustomer.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": "{{createProduct.response.body.$.id}}",
+      "quantity": 1
+    }
+  ],
+  "shippingMethod": 1
+}
+
+### Mark the order as packed as admin
+PATCH {{baseUrl}}/api/orders/{{createOrder.response.body.$.id}}/status
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "status": "Packed"
+}

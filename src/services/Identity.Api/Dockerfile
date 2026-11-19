@@ -18,9 +18,8 @@ RUN dotnet publish src/services/Identity.Api/Identity.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-# WHY: Run as non-root to limit blast radius if the container is compromised.
-RUN adduser --disabled-password --gecos "" appuser
-USER appuser
+# WHY: Use the non-root user provided by the official .NET runtime image.
+USER $APP_UID
 
 COPY --from=build /app/publish .
 EXPOSE 8080

@@ -46,6 +46,7 @@ public sealed class GetAdminOrdersQuery(IOrderRepository orders)
     public async Task<PagedCursorResult<OrderSummaryDto>> HandleAsync(
         AdminOrderFilter filter, CancellationToken ct)
     {
+        filter = filter with { PageSize = Math.Clamp(filter.PageSize, 1, 100) };
         var (items, nextCursor) = await orders.GetAdminOrdersAsync(filter, ct);
         return new PagedCursorResult<OrderSummaryDto>(items, nextCursor);
     }

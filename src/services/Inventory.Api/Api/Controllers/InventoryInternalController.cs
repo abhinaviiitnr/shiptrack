@@ -1,5 +1,6 @@
 using Inventory.Api.Application.Commands;
 using Inventory.Api.Application.DTOs;
+using Inventory.Api.Application.Queries;
 using Inventory.Api.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -14,8 +15,18 @@ namespace Inventory.Api.Api.Controllers;
 public sealed class InventoryInternalController(
     ReserveStockHandler reserveHandler,
     ReleaseStockHandler releaseHandler,
+    GetProductBatchQuery getProductBatch,
     IOptions<InternalKeyOptions> internalKey) : ControllerBase
 {
+    [HttpGet("products/batch")]
+    [ProducesResponseType<IReadOnlyList<ProductDto>>(200)]
+    public async Task<IActionResult> GetProductPrices(
+        [FromQuery] Guid[] ids, CancellationToken ct)
+    {
+        if (!IsAuthorized()) return Forbid();
+        return Ok(await getProductBatch.HandleAsync(ids, ct));
+    }
+
     [HttpPost("reserve")]
     [ProducesResponseType(200)]
     [ProducesResponseType<ProblemDetails>(409)]

@@ -22,8 +22,10 @@ public sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options)
 
             // Composite indexes for the two key query patterns.
             // WHY: See docs/sql-optimization.md for EXPLAIN ANALYZE output.
-            e.HasIndex(o => new { o.Status, o.CreatedAt });
-            e.HasIndex(o => new { o.CustomerId, o.CreatedAt });
+            e.HasIndex(o => new { o.Status, o.CreatedAt })
+                .IsDescending(false, true);
+            e.HasIndex(o => new { o.CustomerId, o.CreatedAt })
+                .IsDescending(false, true);
 
             e.HasMany(o => o.Items)
              .WithOne()

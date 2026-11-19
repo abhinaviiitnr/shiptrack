@@ -35,6 +35,7 @@ public static class LargeOrderSeeder
         for (var batchStart = 0; batchStart < totalOrders; batchStart += batchSize)
         {
             var currentBatchCount = Math.Min(batchSize, totalOrders - batchStart);
+            var seededOrders = new List<SeededOrder>(currentBatchCount);
 
             // Use binary copy for orders table for maximum performance
             using (var writer = await connection.BeginBinaryImportAsync(
@@ -50,6 +51,12 @@ public static class LargeOrderSeeder
                     var shippingCost = shippingMethod == ShippingMethod.Standard ? 50m : 150m;
                     var total = (decimal)random.Next(100, 2000) + shippingCost;
                     var created = baseDate.AddMinutes(orderIndex * 2.5);
+                    var productId = Guid.NewGuid();
+                    var productName = $"Seeded Product {random.Next(1, 10000)}";
+                    var unitPrice = total / random.Next(1, 4);
+
+                    seededOrders.Add(new SeededOrder(
+                        orderId, productId, productName, unitPrice));
 
                     await writer.StartRowAsync(ct);
                     await writer.WriteAsync(orderId, NpgsqlTypes.NpgsqlDbType.Uuid, ct);
@@ -64,9 +71,31 @@ public static class LargeOrderSeeder
                 await writer.CompleteAsync(ct);
             }
 
+            using (var writer = await connection.BeginBinaryImportAsync(
+                "COPY \"OrderItems\" (\"Id\", \"OrderId\", \"ProductId\", \"ProductNameSnapshot\", \"UnitPriceSnapshot\", \"Quantity\") FROM STDIN (FORMAT BINARY)", ct))
+            {
+                foreach (var seededOrder in seededOrders)
+                {
+                    await writer.StartRowAsync(ct);
+                    await writer.WriteAsync(Guid.NewGuid(), NpgsqlTypes.NpgsqlDbType.Uuid, ct);
+                    await writer.WriteAsync(seededOrder.OrderId, NpgsqlTypes.NpgsqlDbType.Uuid, ct);
+                    await writer.WriteAsync(seededOrder.ProductId, NpgsqlTypes.NpgsqlDbType.Uuid, ct);
+                    await writer.WriteAsync(seededOrder.ProductName, NpgsqlTypes.NpgsqlDbType.Varchar, ct);
+                    await writer.WriteAsync(seededOrder.UnitPrice, NpgsqlTypes.NpgsqlDbType.Numeric, ct);
+                    await writer.WriteAsync(1, NpgsqlTypes.NpgsqlDbType.Integer, ct);
+                }
+                await writer.CompleteAsync(ct);
+            }
+
             logger.LogInformation("Seeded {Count} / {Total} orders...", batchStart + currentBatchCount, totalOrders);
         }
 
         logger.LogInformation("Large order seed completed successfully.");
     }
+
+    private sealed record SeededOrder(
+        Guid OrderId,
+        Guid ProductId,
+        string ProductName,
+        decimal UnitPrice);
 }

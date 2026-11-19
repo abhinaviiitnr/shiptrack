@@ -18,7 +18,10 @@ public sealed class InventoryClient(HttpClient http, IOptions<InventoryServiceOp
         IEnumerable<Guid> ids, CancellationToken ct = default)
     {
         var query = string.Join("&", ids.Select(id => $"ids={id}"));
-        var response = await http.GetAsync($"/api/products/batch?{query}", ct);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get, $"/api/inventory/products/batch?{query}");
+        request.Headers.Add("X-Internal-Key", _opts.InternalKey);
+        var response = await http.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
         var products = await response.Content.ReadFromJsonAsync<List<ProductPriceDto>>(ct)

@@ -23,12 +23,19 @@ services:
   # ── Identity Service ────────────────────────────────────────────────────────
   identity:
     build:
-      context: ./src/services/Identity.Api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/services/Identity.Api/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
+      ASPNETCORE_ENVIRONMENT: Docker
       ASPNETCORE_URLS: http://+:8080
+      Jwt__Secret: ${JWT_SECRET}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE}
+      Jwt__ExpiryMinutes: ${JWT_EXPIRY_MINUTES}
+      AdminEmail: ${ADMIN_EMAIL}
+      AdminPassword: ${ADMIN_PASSWORD}
       ConnectionStrings__DefaultConnection: >-
         Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${IDENTITY_DB};
         Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
@@ -38,7 +45,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/live || exit 1"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080; printf \"GET /health/live HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \" 200 \" <&3'"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -49,12 +56,17 @@ services:
   # ── Inventory Service ───────────────────────────────────────────────────────
   inventory:
     build:
-      context: ./src/services/Inventory.Api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/services/Inventory.Api/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
+      ASPNETCORE_ENVIRONMENT: Docker
       ASPNETCORE_URLS: http://+:8080
+      Jwt__Secret: ${JWT_SECRET}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE}
+      InternalKey__Value: ${INVENTORY_INTERNAL_KEY}
       ConnectionStrings__DefaultConnection: >-
         Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${INVENTORY_DB};
         Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
@@ -64,7 +76,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/live || exit 1"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080; printf \"GET /health/live HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \" 200 \" <&3'"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -75,12 +87,16 @@ services:
   # ── Orders Service ──────────────────────────────────────────────────────────
   orders:
     build:
-      context: ./src/services/Orders.Api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/services/Orders.Api/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
+      ASPNETCORE_ENVIRONMENT: Docker
       ASPNETCORE_URLS: http://+:8080
+      Jwt__Secret: ${JWT_SECRET}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE}
       ConnectionStrings__DefaultConnection: >-
         Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${ORDERS_DB};
         Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
@@ -94,7 +110,7 @@ services:
       inventory:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/live || exit 1"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080; printf \"GET /health/live HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \" 200 \" <&3'"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -105,11 +121,12 @@ services:
   # ── YARP Gateway ────────────────────────────────────────────────────────────
   gateway:
     build:
-      context: ./src/gateway/Gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/gateway/Gateway/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
+      ASPNETCORE_ENVIRONMENT: Docker
       ASPNETCORE_URLS: http://+:8080
       ReverseProxy__Clusters__identity-cluster__Destinations__destination1__Address: ${IDENTITY_INTERNAL_URL}
       ReverseProxy__Clusters__inventory-cluster__Destinations__destination1__Address: ${INVENTORY_INTERNAL_URL_GATEWAY}
@@ -128,9 +145,12 @@ services:
 
   # ── React Frontend ──────────────────────────────────────────────────────────
   web:
+    # The frontend is enabled in the frontend phase. Until src/web exists,
+    # backend services can be started with the default Compose profile.
+    profiles: ["frontend"]
     build:
-      context: ./src/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/web/Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
     restart: unless-stopped

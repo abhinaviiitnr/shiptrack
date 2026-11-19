@@ -2,6 +2,7 @@ using Inventory.Api.Application.Commands;
 using Inventory.Api.Application.DTOs;
 using Inventory.Api.Domain;
 using Inventory.Api.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Xunit;
@@ -64,7 +65,6 @@ public class HandlerTests
         Assert.Null(result);
     }
 
-    [Fact]
     [Fact]
     public async Task ReserveStock_EmptyOrNonPositiveLines_ReturnsInvalidRequest()
     {

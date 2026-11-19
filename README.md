@@ -41,10 +41,10 @@ Ensure **Docker Desktop** is running, then:
 
 ```bash
 # 1. Clone & copy environment configuration
-cp .env.example .env
+Copy-Item .env.example .env
 
 # 2. Build and launch all services and databases
-docker compose up --build
+docker compose --profile frontend up --build
 
 # 3. Open the application in your browser
 # Web App:      http://localhost:3000
@@ -66,7 +66,7 @@ docker compose up --build
 | **Databases** | PostgreSQL 16 | Dedicated database per service (`identity_db`, `inventory_db`, `orders_db`). |
 | **Concurrency** | PostgreSQL `xmin` | Optimistic concurrency token prevents overselling on parallel stock reservation requests. |
 | **Patterns** | CQRS-lite, Strategy, State | Clean separation of commands/queries; Shipping cost Strategy; Order lifecycle State machine. |
-| **Frontend** | React 19 + TypeScript | Strict mode, Vite, TanStack Query, React Router, react-hook-form + Zod, Tailwind CSS. |
+| **Frontend** | React 19 + TypeScript | Strict mode, Vite, TanStack Query, React Router, typed API client, react-hook-form + Zod foundation, and Tailwind CSS. |
 | **Testing** | xUnit + NSubstitute + Testcontainers | Real PostgreSQL integration tests for concurrency and access control; Vitest + RTL + MSW on frontend. |
 
 ---
@@ -101,5 +101,6 @@ cd src/web && npm test
 - [Architectural Decision Records (ADRs)](docs/DECISIONS.md)
 - [Security & OWASP Top 10](docs/SECURITY.md)
 - [SQL Optimization & Indexing Benchmark](docs/sql-optimization.md)
+- [Project Report and Resume Summary](docs/PROJECT-REPORT.md)
 - [25 Technical Interview Questions & Answers](docs/INTERVIEW_NOTES.md)
 - [Phase-by-Phase Progress Log](docs/PROGRESS.md)

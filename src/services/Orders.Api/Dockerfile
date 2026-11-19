@@ -12,8 +12,7 @@ RUN dotnet publish src/services/Orders.Api/Orders.Api.csproj \
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-RUN adduser --disabled-password --gecos "" appuser
-USER appuser
+USER $APP_UID
 COPY --from=build /app/publish .
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Orders.Api.dll"]
