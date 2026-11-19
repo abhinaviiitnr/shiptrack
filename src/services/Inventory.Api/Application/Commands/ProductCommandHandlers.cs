@@ -59,8 +59,17 @@ public sealed class ReserveStockHandler(InventoryDbContext db)
 {
     public async Task<ReserveResult> HandleAsync(ReserveRequest req, CancellationToken ct)
     {
+        if (req.Items.Count == 0 || req.Items.Any(item => item.Quantity <= 0))
+            return ReserveResult.InvalidRequest("Every reservation must contain at least one item with a positive quantity.");
+
+        // Aggregate duplicate lines before checking stock. Otherwise two lines
+        // for the same product could each pass the check and oversell it.
+        var requestedQuantities = req.Items
+            .GroupBy(item => item.ProductId)
+            .ToDictionary(group => group.Key, group => group.Sum(item => item.Quantity));
+
         // Lock all requested rows upfront in a consistent order to avoid deadlocks.
-        var productIds = req.Items.Select(i => i.ProductId).OrderBy(id => id).ToList();
+        var productIds = requestedQuantities.Keys.OrderBy(id => id).ToList();
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         try
@@ -71,20 +80,20 @@ public sealed class ReserveStockHandler(InventoryDbContext db)
                 .ToListAsync(ct);
 
             // Validate every item before touching any stock.
-            foreach (var item in req.Items)
+            foreach (var item in requestedQuantities)
             {
-                var product = products.FirstOrDefault(p => p.Id == item.ProductId);
+                var product = products.FirstOrDefault(p => p.Id == item.Key);
                 if (product is null)
-                    return ReserveResult.NotFound(item.ProductId);
-                if (product.StockQuantity < item.Quantity)
-                    return ReserveResult.InsufficientStock(item.ProductId, product.StockQuantity);
+                    return ReserveResult.NotFound(item.Key);
+                if (product.StockQuantity < item.Value)
+                    return ReserveResult.InsufficientStock(item.Key, product.StockQuantity);
             }
 
             // Apply all reductions — only if every check passed.
-            foreach (var item in req.Items)
+            foreach (var item in requestedQuantities)
             {
-                var product = products.First(p => p.Id == item.ProductId);
-                product.StockQuantity -= item.Quantity;
+                var product = products.First(p => p.Id == item.Key);
+                product.StockQuantity -= item.Value;
             }
 
             // SaveChanges will throw DbUpdateConcurrencyException if another
@@ -129,9 +138,16 @@ public sealed class ReleaseStockHandler(InventoryDbContext db)
 }
 
 // Result type to avoid exception-driven control flow for expected business outcomes.
-public sealed record ReserveResult(bool IsSuccess, string? ErrorCode, string? Detail, Guid? ProductId)
+public sealed record ReserveResult(
+    bool IsSuccess,
+    string? ErrorCode,
+    string? Detail,
+    Guid? ProductId,
+    bool IsInvalidRequest = false)
 {
     public static ReserveResult Success() => new(true, null, null, null);
+    public static ReserveResult InvalidRequest(string detail) =>
+        new(false, "INVALID_REQUEST", detail, null, true);
     public static ReserveResult InsufficientStock(Guid id, int available) =>
         new(false, "INSUFFICIENT_STOCK",
             $"Product {id} has only {available} units available.", id);

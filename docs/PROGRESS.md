@@ -13,3 +13,10 @@
 - Implemented CQRS-lite Register and Login command handlers with clean DTO projections and FluentValidation.
 - Added comprehensive unit tests for validators, password hashing, and JWT claims inspection.
 - Added Testcontainers PostgreSQL integration tests verifying registration, login, 409 conflict on duplicate email, and 429 on rate limit exhaustion (all 18 tests passing).
+
+## Phase 2: Inventory Service and Automated Tests
+- Implemented product catalogue CRUD with authenticated reads and AdminOnly writes, plus paged name search and batch lookup.
+- Added PostgreSQL `xmin` optimistic concurrency so parallel reservations cannot oversell stock.
+- Added protected internal reserve and release endpoints using the configured `X-Internal-Key`, with all-or-nothing transactions.
+- Added unit tests for product handlers and validators, and Testcontainers integration tests for access control, reservation, and last-unit concurrency.
+- Duplicate reservation lines are aggregated and invalid quantities return 400; the phase is ready for SDK-backed build and test verification.

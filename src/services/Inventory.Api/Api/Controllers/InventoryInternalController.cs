@@ -24,6 +24,15 @@ public sealed class InventoryInternalController(
         if (!IsAuthorized()) return Forbid();
 
         var result = await reserveHandler.HandleAsync(req, ct);
+        if (result.IsInvalidRequest)
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Invalid stock reservation",
+                Detail = result.Detail,
+                Extensions = { ["errorCode"] = result.ErrorCode }
+            });
+
         if (!result.IsSuccess)
             return Conflict(new ProblemDetails
             {
